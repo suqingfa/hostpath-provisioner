@@ -12,11 +12,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/sig-storage-lib-external-provisioner/v6/controller"
+	"sigs.k8s.io/sig-storage-lib-external-provisioner/v11/controller"
 )
 
 const (
-	defaultProvisionerName = "hostpath"
+	defaultProvisionerName = "hostpath-provisioner"
 	defaultPVDir           = "/data"
 	defaultIdentity        = "hostpath-provisioner"
 )
@@ -112,18 +112,17 @@ func main() {
 		return
 	}
 
-	serverVersion, err := client.Discovery().ServerVersion()
-	if err != nil {
-		klog.Fatalf("error getting server version: %v", err)
-		return
-	}
-
 	provisioner := &hostPathProvisioner{
 		pvDir:    pvDir,
 		identity: identity,
 	}
 
-	provisionController := controller.NewProvisionController(client, provisionerName, provisioner, serverVersion.GitVersion)
+	provisionController := controller.NewProvisionController(
+		context.Background(),
+		client,
+		provisionerName,
+		provisioner,
+	)
 
 	klog.Info("Storage provisioner initialized, now starting service!")
 	provisionController.Run(context.Background())
